@@ -8,7 +8,7 @@
 3. Enable the cron script (runs nightly).
 
 ### Selection criteria
-
+Note: The criteria below has an AND relationship, as selected sandboxes must match all specified criteria.
 - Templates: include only sandboxes created from specific templates (`TEMPLATES_CSV`).
 - Name prefixes: include only sandboxes whose names start with given prefixes (`SANDBOX_NAME_PREFIX`).
 - Inactivity: include only sandboxes inactive for at least N days (`LAST_ACTIVE_BEFORE_DAYS`).
