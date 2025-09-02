@@ -17,7 +17,7 @@ workspaces:
           jobs:
             housekeep:
               run:
-                cmd: ./sb_cleanup.sh
+                cmd: ./sb_cleanup.sh --force-delete
               schedule: "0 23 * * *"
               disable_on_start: true
 
