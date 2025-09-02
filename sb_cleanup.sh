@@ -9,12 +9,36 @@ set -euo pipefail
 TEMPLATES_CSV=""
 
 # Only include sandboxes whose names start with this prefix. Empty = no name filter.
-SANDBOX_NAME_PREFIX="sb"
+SANDBOX_NAME_PREFIX=""
 
 # Include sandboxes whose last activity is older than this many days.
 # Uses meta.accessed_at when available; otherwise falls back to meta.updated_at.
 # Empty = no inactivity filter.
 LAST_ACTIVE_BEFORE_DAYS=""
+
+# Runtime flags
+# Set via CLI flags; defaults maintain read-only behavior
+FORCE_DELETE=false
+
+# -----------------------------------------------------------------------------
+# CLI args parsing
+# -----------------------------------------------------------------------------
+while [[ ${#} -gt 0 ]]; do
+  case "${1}" in
+    --force-delete|-F|-f)
+      FORCE_DELETE=true
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      echo "Unknown argument: ${1}" >&2
+      exit 2
+      ;;
+  esac
+done
 
 # -----------------------------------------------------------------------------
 # Helpers
@@ -22,6 +46,32 @@ LAST_ACTIVE_BEFORE_DAYS=""
 days_ago_to_epoch_cutoff() {
   local days="$1"
   date -u -d "-$days days" +%s
+}
+
+# Normalize sandbox name by stripping all prefixes (keep last segment after '/')
+normalize_sandbox_name() {
+  local name="$1"
+  echo "${name##*/}"
+}
+
+# Delete sandbox non-interactively using the canonical command
+delete_sandbox_non_interactive() {
+  local raw_name="$1"
+  local name
+  name=$(normalize_sandbox_name "${raw_name}")
+
+  if ! command -v cs >/dev/null 2>&1; then
+    echo "cs CLI not found in PATH" >&2
+    return 127
+  fi
+
+  if cs sandbox remove "${name}" --force --wait >/dev/null 2>&1; then
+    echo "Deleted sandbox: ${name}" >&2
+    return 0
+  fi
+
+  echo "Failed to delete sandbox: ${name}" >&2
+  return 1
 }
 
 # -----------------------------------------------------------------------------
@@ -74,5 +124,22 @@ echo "${filtered}" | jq -r '
     ((.meta.accessed_at // .meta.updated_at) // "")
   ] | @tsv
 '
+
+
+# Optional destructive step: force delete matched sandboxes
+if [[ "${FORCE_DELETE}" == "true" ]]; then
+  # Extract names from filtered stream
+  names=$(echo "${filtered}" | jq -r '(.meta.name // empty)')
+
+  if [[ -z "${names}" ]]; then
+    echo "No sandboxes matched the filter; nothing to delete." >&2
+  else
+    echo "Force deletion requested; attempting to delete matched sandboxes..." >&2
+    while IFS= read -r sb_name; do
+      [[ -z "${sb_name}" ]] && continue
+      delete_sandbox_non_interactive "${sb_name}" || true
+    done <<< "${names}"
+  fi
+fi
 
 
