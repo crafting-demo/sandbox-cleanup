@@ -77,6 +77,11 @@ delete_sandbox_non_interactive() {
 # -----------------------------------------------------------------------------
 # Build base command
 # -----------------------------------------------------------------------------
+# Safety: if no criteria are set, do nothing to avoid acting on all sandboxes
+if [[ -z "${TEMPLATES_CSV}" && -z "${SANDBOX_NAME_PREFIX}" && -z "${LAST_ACTIVE_BEFORE_DAYS}" ]]; then
+  exit 0
+fi
+
 cmd=(cs sb list)
 if [[ -n "${TEMPLATES_CSV}" ]]; then
   cmd+=( -t "${TEMPLATES_CSV}" )
