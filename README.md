@@ -1,6 +1,11 @@
-### sb_cleanup.sh – Parameters and Usage
+## Sandbox Cleanup
 
 **Purpose**: Template repo demonstrating a scheduled cron job sandbox that finds and removes sandboxes matching configurable criteria.
+
+### How to use:
+1. Create a new sandbox using the `sandbox.yaml` definition from this repo. 
+2. Update the variables in `sb_cleanup.sh` to choose which sandboxes get selected for deletion. 
+3. Enable the cron script (runs nightly).
 
 ### Selection criteria
 
