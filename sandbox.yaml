@@ -1,0 +1,23 @@
+overview: |
+  Sandbox to check out sandbox-cleanup and schedule nightly cleanup job.
+workspaces:
+- name: cleanup
+  checkouts:
+  - path: src/sandbox-cleanup
+    repo:
+      github:
+        org: crafting-demo
+        repo: sandbox-cleanup
+    manifest:
+      overlays:
+      - inline:
+          hooks:
+            post-checkout:
+              cmd: chmod +x sb_cleanup.sh
+          jobs:
+            housekeep:
+              run:
+                cmd: ./sb_cleanup.sh
+              schedule: "0 23 * * *"
+              disable_on_start: true
+
